@@ -1,9 +1,5 @@
 # PaySnap – Contactless QR Payment Platform
 
-![PaySnap](https://img.shields.io/badge/PaySnap-Payment%20Solution-blue)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green)
-![Stripe](https://img.shields.io/badge/Stripe-Payment%20Processing-635bff)
-
 PaySnap is a secure and modular payment platform designed for businesses and individuals to generate Stripe-powered payment links and QR codes for fast, contactless transactions. With a clean REST API and real-time payment tracking, PaySnap enables seamless integration with modern payment workflows.
 
 ---
