@@ -26,7 +26,11 @@ public class JwtUtil {
     private Long expirationTime;
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        String safeSecret = secret;
+        if (secret.length() < 64) {
+            safeSecret = String.format("%-64s", secret).replace(' ', '0');
+        }
+        return Keys.hmacShaKeyFor(safeSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(String username) {
@@ -38,7 +42,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuedAt(new Date((System.currentTimeMillis())))
+                .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();

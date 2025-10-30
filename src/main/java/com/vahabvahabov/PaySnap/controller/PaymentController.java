@@ -15,4 +15,8 @@ public interface PaymentController {
     public ResponseEntity<List<Order>> getUserOrders(User user);
 
     public ResponseEntity<?> getOrderById(Long orderId, User user);
+
+    public ResponseEntity<?> handlePaymentSuccess(String sessionId);
+
+    public ResponseEntity<?> handlePaymentCancel(String sessionId);
 }

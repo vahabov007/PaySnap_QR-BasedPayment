@@ -5,9 +5,12 @@ import com.vahabvahabov.PaySnap.controller.PaymentController;
 import com.vahabvahabov.PaySnap.dto.OrderRequest;
 import com.vahabvahabov.PaySnap.dto.PaymentSessionResponse;
 import com.vahabvahabov.PaySnap.model.Order;
+import com.vahabvahabov.PaySnap.model.PaymentStatus;
 import com.vahabvahabov.PaySnap.model.User;
 import com.vahabvahabov.PaySnap.service.OrderService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,6 +24,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/payment")
+@Slf4j
 public class PaymentControllerImpl implements PaymentController {
 
     @Autowired
@@ -61,6 +65,45 @@ public class PaymentControllerImpl implements PaymentController {
             return ResponseEntity.notFound().build();
         }
 
+    }
+
+    @Override
+    @GetMapping("/success")
+    public ResponseEntity<?> handlePaymentSuccess(@RequestParam("session_id") String sessionId) {
+        try {
+            orderService.updateOrderStatus(sessionId, PaymentStatus.COMPLETED);
+            Optional<Order> optional = orderService.getOrderByStripeSessionId(sessionId);
+            if (optional.isPresent()) {
+                Order order = optional.get();
+                log.info("Payment success processed for order: {}", order.getId());
+                return ResponseEntity.ok(order);
+            }else {
+                log.warn("Order not found for session: {}", sessionId);
+                return ResponseEntity.badRequest().body(createResponse(false, "Order not found."));
+            }
+        }catch (Exception e) {
+            return ResponseEntity.badRequest().body(createResponse(false, e.getMessage()));
+
+        }
+    }
+
+    @Override
+    @GetMapping("/cancel")
+    public ResponseEntity<?> handlePaymentCancel(@RequestParam("session_id") String sessionId) {
+        try {
+            orderService.updateOrderStatus(sessionId, PaymentStatus.CANCELED);
+            Optional<Order> optional = orderService.getOrderByStripeSessionId(sessionId);
+            if (optional.isPresent()) {
+                Order order = optional.get();
+                log.info("Payment cancel processed for order: {}", order.getId());
+                return ResponseEntity.ok(order);
+            }else {
+                log.warn("Order not found for session: {}", sessionId);
+                return ResponseEntity.badRequest().body(createResponse(false, "Order not found."));
+            }
+        }catch (Exception e) {
+            return ResponseEntity.badRequest().body(createResponse(false, e.getMessage()));
+        }
     }
 
     private Map<String, Object> createResponse(boolean success, String message) {

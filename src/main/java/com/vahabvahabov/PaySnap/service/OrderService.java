@@ -19,4 +19,5 @@ public interface OrderService {
     Optional<Order> getOrderById(Long orderId);
     void updateOrderStatus(String stripeSessionId, PaymentStatus status);
     List<Order> getExpiredPendingOrders();
+    Optional<Order> getOrderByStripeSessionId(String stripeSessionId);
 }

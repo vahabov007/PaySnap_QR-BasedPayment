@@ -12,6 +12,7 @@ import com.vahabvahabov.PaySnap.repository.OrderRepository;
 import com.vahabvahabov.PaySnap.service.OrderService;
 import com.vahabvahabov.PaySnap.service.QrCodeService;
 import com.vahabvahabov.PaySnap.service.StripeService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
@@ -41,17 +43,24 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public PaymentSessionResponse createPaymentSession(OrderRequest request, User user) throws StripeException, IOException, WriterException {
         try {
+            if (request.getCurrency() == null || request.getCurrency().trim().isEmpty()) {
+                throw new IllegalArgumentException("Currency cannot be null or empty");
+            }
             Order order = new Order();
             order.setAmount(request.getAmount());
             order.setUser(user);
-            order.setCurrency(order.getCurrency());
+            order.setCurrency(request.getCurrency());
             order.setPaymentStatus(PaymentStatus.PENDING);
             order.setCreatedAt(LocalDateTime.now());
 
             Order savedOrder = orderRepository.save(order);
+            log.info("Order created - ID: {}, Amount: {}, Currency: {}",
+                    savedOrder.getId(), savedOrder.getAmount(), savedOrder.getCurrency());
+
             Session session = stripeService.createdCheckoutSession(savedOrder, request.getCustomerEmail());
             savedOrder.setStripeSessionId(session.getId());
             orderRepository.save(savedOrder);
+
 
             String qrCode = qrCodeService.generateQrCodeImage(session.getUrl(), 250, 250);
             return new PaymentSessionResponse(session.getId(), session.getUrl(), qrCode, savedOrder.getId());
@@ -91,5 +100,10 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getExpiredPendingOrders() {
         LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(sessionTimeoutMinutes);
         return orderRepository.findByPaymentStatusAndCreatedAtBefore(PaymentStatus.PENDING, cutoffTime);
+    }
+
+    @Override
+    public Optional<Order> getOrderByStripeSessionId(String stripeSessionId) {
+        return orderRepository.findByStripeSessionId(stripeSessionId);
     }
 }

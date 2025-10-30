@@ -60,7 +60,7 @@ public class UserControllerImpl implements UserController {
         }
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-            String jwt = jwtUtil.generateToken(request.getUsername());
+            final String jwt = jwtUtil.generateToken(request.getUsername());
             return ResponseEntity.ok(new AuthResponse(jwt, request.getUsername(), "Login Successfully."));
 
 
@@ -91,7 +91,7 @@ public class UserControllerImpl implements UserController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+            final String token = authHeader.substring(7);
             long expirationTime = jwtUtil.getExpirationTime(token).getTime() - System.currentTimeMillis();
             if (expirationTime > 0) {
                 blackListRepository.blackListToken(token, expirationTime);

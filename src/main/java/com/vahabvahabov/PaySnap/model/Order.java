@@ -23,7 +23,7 @@ public class Order {
 
     private String currency;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
     private String stripeSessionId;
